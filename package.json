@@ -1,0 +1,28 @@
+{
+  "name": "nodejs-crypto-payments",
+  "version": "1.0.0",
+  "description": "At Kraken, we receive thousands of deposits from customers per day. This test is designed to test your ability to work with a transaction set that could get returned by a blockchain daemon like bitcoind.",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "start:dev": "nodemon --watch index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hasip-timurtas/nodejs-crypto-payments.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hasip-timurtas/nodejs-crypto-payments/issues"
+  },
+  "homepage": "https://github.com/hasip-timurtas/nodejs-crypto-payments#readme",
+  "dependencies": {
+    "mongoose": "^6.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.5.0"
+  }
+}
