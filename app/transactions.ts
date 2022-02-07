@@ -4,6 +4,11 @@ import userData from '../data/users.json';
 import transactionsData1 from '../data/transactions-1.json';
 import transactionsData2 from '../data/transactions-2.json';
 import { VALID_DEPOSIT_QUERY } from './constants'
+import {
+  ITransaction,
+  IDepositInfo,
+  IWithoutReference
+} from './types';
 
 export default class Transactions {
   async seedData() {
@@ -16,14 +21,14 @@ export default class Transactions {
   }
 
   removedDuplicates() {
-    const importedTransactions = [
+    const importedTransactions: Array<ITransaction> = [
       ...transactionsData1.transactions,
       ...transactionsData2.transactions,
     ];
 
-    const transactions: any[] = [];
+    const transactions: Array<ITransaction> = [];
     for (const transaction of importedTransactions) {
-      if (transactions.find((ts: any) => ts.txid === transaction.txid)) continue;
+      if (transactions.find((ts: ITransaction) => ts.txid === transaction.txid)) continue;
       transactions.push(transaction);
     }
 
@@ -32,19 +37,19 @@ export default class Transactions {
 
   async getDepositInformation() {
     await this.seedData();
-    const transactions = await this.getValidDeposits();
+    const transactions: Array<IDepositInfo> = await this.getValidDeposits();
     const duplicates = await this.getDublicates();
 
     if (duplicates.length) throw new Error('There are dublicated Transactions.');
 
-    const customerTransactions: any = this.getCustomerTransactions(transactions);
-    const withoutReferences: any = this.getWithoutReferences(transactions);
+    const customerTransactions: Array<IDepositInfo> = this.getCustomerTransactions(transactions);
+    const withoutReferences: IWithoutReference = this.getWithoutReferences(transactions);
 
     const result = await this.printDepositInformation(customerTransactions, withoutReferences);
     return result;
   }
 
-  async getValidDeposits(): Promise<any> {
+  async getValidDeposits(): Promise<Array<IDepositInfo>> {
     return TransactionModel
       .aggregate([
         {
@@ -81,11 +86,11 @@ export default class Transactions {
       .exec();
   }
 
-  getWithoutReferences(transactions: any) {
+  getWithoutReferences(transactions: Array<IDepositInfo>): IWithoutReference {
     return transactions
-      .filter((transaction: any) => !transaction.userDetail.length)
+      .filter((transaction: IDepositInfo) => !transaction.userDetail.length)
       .reduce(
-        (obj: any, current: any) => {
+        (obj: IWithoutReference, current: IWithoutReference) => {
           obj.sum += current.sum;
           obj.count += current.count;
 
@@ -98,22 +103,20 @@ export default class Transactions {
       );
   }
 
-  getCustomerTransactions(transactions: any) {
+  getCustomerTransactions(transactions: Array<IDepositInfo>): Array<IDepositInfo> {
     return transactions
-      .filter((transaction: any) => transaction.userDetail.length)
-      .map((transaction: any) => {
+      .filter((transaction: IDepositInfo) => transaction.userDetail.length)
+      .map((transaction: IDepositInfo) => {
         const { name, index } = transaction.userDetail[0];
-        return {
-          index,
-          name,
-          ...transaction,
-        };
+        transaction.name = name;
+        transaction.index = index
+        return transaction;
       });
   }
 
-  async printDepositInformation(customerTransactions: any, withoutReferences: any) {
+  async printDepositInformation(customerTransactions: Array<IDepositInfo>, withoutReferences: IWithoutReference) {
     let output = '';
-    customerTransactions.sort((a: any, b: any) => a.index - b.index);
+    customerTransactions.sort((a: IDepositInfo, b: IDepositInfo) => a.index - b.index);
     for (const cts of customerTransactions) {
       output += `Deposited for ${cts.name}: count=${cts.count} sum=${cts.sum.toFixed(8)}\n`;
     }
@@ -125,10 +128,9 @@ export default class Transactions {
     output += `Smallest valid deposit: ${smallest.toFixed(8)}\n`;
     output += `Largest valid deposit: ${largest.toFixed(8)}`;
     console.log(output);
-    return output;
   }
 
-  async getSmallestAndLargestAmounts(): Promise<any> {
+  async getSmallestAndLargestAmounts() {
     return TransactionModel.aggregate([
       {
         $match: VALID_DEPOSIT_QUERY,
@@ -144,7 +146,7 @@ export default class Transactions {
       .exec();
   }
 
-  async getDublicates(): Promise<any> {
+  async getDublicates() {
     return TransactionModel.aggregate([
       {
         $group: {

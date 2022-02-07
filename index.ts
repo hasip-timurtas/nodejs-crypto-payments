@@ -3,6 +3,7 @@ import Transactions from './app/transactions'
 
 async function run(): Promise<void> {
   await connect('mongodb://mongo:27017/kraken');
+  //await connect('mongodb://localhost:27017/kraken');
   const transactions = new Transactions();
   const data = await transactions.getDepositInformation();
 }
