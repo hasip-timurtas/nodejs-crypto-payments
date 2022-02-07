@@ -33,12 +33,9 @@ export default class Transactions {
   async getDepositInformation() {
     await this.seedData();
     const transactions = await this.getValidDeposits();
-    console.log(transactions.length);
-
     const duplicates = await this.getDublicates();
 
-    if (duplicates.length)
-      throw new Error('There are dublicated Transactions.');
+    if (duplicates.length) throw new Error('There are dublicated Transactions.');
 
     const customerTransactions: any = this.getCustomerTransactions(transactions);
     const withoutReferences: any = this.getWithoutReferences(transactions);
@@ -118,19 +115,14 @@ export default class Transactions {
     let output = '';
     customerTransactions.sort((a: any, b: any) => a.index - b.index);
     for (const cts of customerTransactions) {
-      output += `Deposited for ${cts.name}: 
-      count=${cts.count} 
-      sum=${cts.sum.toFixed(8)}<br>`;
+      output += `Deposited for ${cts.name}: count=${cts.count} sum=${cts.sum.toFixed(8)}\n`;
     }
 
-    output += `Deposited without reference: 
-    count=${withoutReferences.count} 
-    sum=${withoutReferences.sum.toFixed(8)}<br>`;
-
+    output += `Deposited without reference: count=${withoutReferences.count} sum=${withoutReferences.sum.toFixed(8)}\n`;
     const minMax = await this.getSmallestAndLargestAmounts();
     const { smallest, largest } = minMax[0] || {};
 
-    output += `Smallest valid deposit: ${smallest.toFixed(8)}<br>`;
+    output += `Smallest valid deposit: ${smallest.toFixed(8)}\n`;
     output += `Largest valid deposit: ${largest.toFixed(8)}`;
     console.log(output);
     return output;
