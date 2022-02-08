@@ -2,10 +2,7 @@ version: "3"
 services:
     transactions:
         container_name: transactions
-        build:
-            .
-        ports:
-            - 3001:3001
+        build: .
         links:
             - mongo
     mongo:
@@ -16,4 +13,4 @@ services:
             - '--logpath'
             - '/var/log/mongodb/mongod.log'
         ports:
-            - '27017:27017'
+            - '27018:27017'

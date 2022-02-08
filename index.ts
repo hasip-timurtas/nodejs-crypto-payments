@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { connect } from 'mongoose';
+import { connect, Error } from 'mongoose';
 import Transactions from './app/transactions'
 dotenv.config();
 
@@ -9,4 +9,4 @@ async function run(): Promise<void> {
   transactions.getDepositInformation();
 }
 
-run().catch(err => console.log(err));
+run().catch((err: Error) => console.log(err));
