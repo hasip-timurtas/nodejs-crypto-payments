@@ -1,11 +1,12 @@
+import * as dotenv from 'dotenv';
 import { connect } from 'mongoose';
 import Transactions from './app/transactions'
+dotenv.config();
 
 async function run(): Promise<void> {
-  await connect('mongodb://mongo:27017/kraken');
-  //await connect('mongodb://localhost:27017/kraken');
+  await connect(process.env.MONGO_URL as string);
   const transactions = new Transactions();
-  const data = await transactions.getDepositInformation();
+  transactions.getDepositInformation();
 }
 
 run().catch(err => console.log(err));

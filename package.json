@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/hasip-timurtas/nodejs-crypto-payments#readme",
   "dependencies": {
+    "dotenv": "^16.0.0",
     "mongoose": "^6.2.0"
   },
   "devDependencies": {
