@@ -11,31 +11,13 @@ import {
 } from './types';
 
 export default class Transactions {
-  async seedData() {
-    await UserModel.deleteMany({});
-    await UserModel.insertMany(userData);
 
-    await TransactionModel.deleteMany({});
-    const transactions = this.removedDuplicates();
-    await TransactionModel.insertMany(transactions);
-  }
-
-  removedDuplicates() {
-    const importedTransactions: Array<ITransaction> = [
-      ...transactionsData1.transactions,
-      ...transactionsData2.transactions,
-    ];
-
-    const transactions: Array<ITransaction> = [];
-    for (const transaction of importedTransactions) {
-      if (transactions.find((ts: ITransaction) => ts.txid === transaction.txid)) continue;
-      transactions.push(transaction);
-    }
-
-    return transactions;
-  }
-
-  async getDepositInformation() {
+  /**
+   * Main fuction to start deposit printing process
+   * 
+   * @throws Error - Throws error if there is duplicated records in transactions
+   */
+  async startPrintProcess() {
     await this.seedData();
     const transactions: Array<IDepositInfo> = await this.getValidDeposits();
     const duplicates = await this.getDublicates();
@@ -45,10 +27,49 @@ export default class Transactions {
     const customerTransactions: Array<IDepositInfo> = this.getCustomerTransactions(transactions);
     const withoutReferences: IWithoutReference = this.getWithoutReferences(transactions);
 
-    const result = await this.printDepositInformation(customerTransactions, withoutReferences);
-    return result;
+    await this.printDepositInformation(customerTransactions, withoutReferences);
   }
 
+  /**
+   * Imports the initial data to mongo collections
+   * For users and transactions
+   */
+  private async seedData() {
+    await UserModel.deleteMany({});
+    await UserModel.insertMany(userData);
+
+    const importedTransactions: Array<ITransaction> = [
+      ...transactionsData1.transactions,
+      ...transactionsData2.transactions,
+    ];
+    await TransactionModel.deleteMany({});
+    const transactions = this.removeDuplicates(importedTransactions);
+    await TransactionModel.insertMany(transactions);
+  }
+
+  /**
+   * Removes the dublicated data from imported transactions
+   * Returns unique transactions
+   * 
+   * @param {Array<ITransaction>} importedTransactions - imported transactions
+   * @returns {Array<ITransaction>}
+   */
+  private removeDuplicates(importedTransactions: Array<ITransaction>) {
+    const transactions: Array<ITransaction> = [];
+    for (const transaction of importedTransactions) {
+      if (transactions.find((ts: ITransaction) => ts.txid === transaction.txid)) continue;
+      transactions.push(transaction);
+    }
+    return transactions;
+  }
+
+  /**
+   * Gets valid deposits and users from mongodb
+   * Matches deposit amount, categories and confirmations
+   * Groups the transactions by users
+   * 
+   * @returns {Promise<Array<IDepositInfo>>}
+   */
   async getValidDeposits(): Promise<Array<IDepositInfo>> {
     return TransactionModel
       .aggregate([
@@ -86,6 +107,31 @@ export default class Transactions {
       .exec();
   }
 
+  /**
+   * Filters transactions with user 
+   * Returns transaction and user information
+   *  
+   * @param {Array<IDepositInfo>} transactions - transactions
+   * @returns {Array<IDepositInfo>} - transactions with user info
+   */
+  getCustomerTransactions(transactions: Array<IDepositInfo>): Array<IDepositInfo> {
+    return transactions
+      .filter((transaction: IDepositInfo) => transaction.userDetail.length)
+      .map((transaction: IDepositInfo) => {
+        const { name, index } = transaction.userDetail[0];
+        transaction.name = name;
+        transaction.index = index
+        return transaction;
+      });
+  }
+
+  /**
+   * Filters transactions without user
+   * Returns sum and count
+   *  
+   * @param {Array<IDepositInfo>} transactions - transactions
+   * @returns {IWithoutReference} - sum and count info
+   */
   getWithoutReferences(transactions: Array<IDepositInfo>): IWithoutReference {
     return transactions
       .filter((transaction: IDepositInfo) => !transaction.userDetail.length)
@@ -103,17 +149,12 @@ export default class Transactions {
       );
   }
 
-  getCustomerTransactions(transactions: Array<IDepositInfo>): Array<IDepositInfo> {
-    return transactions
-      .filter((transaction: IDepositInfo) => transaction.userDetail.length)
-      .map((transaction: IDepositInfo) => {
-        const { name, index } = transaction.userDetail[0];
-        transaction.name = name;
-        transaction.index = index
-        return transaction;
-      });
-  }
-
+  /**
+   * Prints the deposit informations
+   *  
+   * @param {Array<IDepositInfo>} customerTransactions - transactions with user info
+   * @param {IWithoutReference} withoutReferences - transactions summary of without user info
+   */
   async printDepositInformation(customerTransactions: Array<IDepositInfo>, withoutReferences: IWithoutReference) {
     let output = '';
     customerTransactions.sort((a: IDepositInfo, b: IDepositInfo) => a.index - b.index);
@@ -130,6 +171,11 @@ export default class Transactions {
     console.log(output);
   }
 
+  /**
+   * Gets smalles and largest valid transaction amounts from mongodb
+   *  
+   * @return {Oject} smallest amd largest valid transaction amounts
+   */
   async getSmallestAndLargestAmounts() {
     return TransactionModel.aggregate([
       {
@@ -146,6 +192,11 @@ export default class Transactions {
       .exec();
   }
 
+  /**
+   * Gets duplicated imported transactions from mongodb
+   *  
+   * @return {Oject} _id (address) and count of the duplicted transactions
+   */
   async getDublicates() {
     return TransactionModel.aggregate([
       {
