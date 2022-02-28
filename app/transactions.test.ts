@@ -42,7 +42,7 @@ describe('Transactions', () => {
     }]
 
     const transactions: Array<ITransaction> = transaction.removeDuplicates(testDuplicatedData);
-    expect(transactions.length).toBe(1)
+    expect(transactions.length).toBe(0)
   })
 
   test('Should return transactions', () => {
