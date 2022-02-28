@@ -9,10 +9,9 @@ export interface ITransaction {
   confirmations: Number,
   blockhash: String,
   blockindex: Number,
-  blocktime: Number,
+  blocktime: number,
   vout: Number,
-  walletconflicts: Array<String>,
-  time: Number,
-  timereceived: Number,
-  'bip125-replaceable'?: String
+  walletconflicts: Array<String> | string,
+  time: number,
+  timereceived: number,
 }

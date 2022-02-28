@@ -4,13 +4,11 @@ services:
         container_name: transactions
         build: .
         links:
-            - mongo
-    mongo:
-        container_name: mongo
-        image: mongo
-        restart: unless-stopped
-        command: 
-            - '--logpath'
-            - '/var/log/mongodb/mongod.log'
-        ports:
-            - '27018:27017'
+          - db
+    db:
+        container_name: db
+        image: postgres
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: transactions
