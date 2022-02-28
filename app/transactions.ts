@@ -168,7 +168,7 @@ export default class Transactions {
    * @param {Array<ITransaction>} importedTransactions - imported transactions
    * @returns {Array<ITransaction>}
    */
-  private removeDuplicates(importedTransactions: Array<ITransaction>) {
+  public removeDuplicates(importedTransactions: Array<ITransaction>) {
     const transactions: Array<ITransaction> = [];
     for (const transaction of importedTransactions) {
       if (transactions.find((ts: ITransaction) => ts.txid === transaction.txid)) continue;
