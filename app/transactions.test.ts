@@ -1,5 +1,5 @@
 import Transactions from './transactions';
-import { ITransaction } from './types';
+import { ITransaction, IKeyValue } from './types';
 import { Pool } from 'pg'
 
 const transaction = new Transactions(new Pool());
@@ -41,8 +41,13 @@ describe('Transactions', () => {
       "timereceived": 1627657303461,
     }]
 
-    const transactions = transaction.removeDuplicates(testDuplicatedData);
+    const transactions: Array<ITransaction> = transaction.removeDuplicates(testDuplicatedData);
     expect(transactions.length).toBe(1)
+  })
+
+  test('Should return transactions', () => {
+    const users: IKeyValue = transaction.getTransactions();
+    expect(users.values.length).toBeGreaterThan(0)
   })
 })
 
@@ -50,7 +55,7 @@ describe('Transactions', () => {
 describe('Users', () => {
   test('Should return users', () => {
     const totalUserAmount = 7;
-    const users = transaction.getUsers();
-    expect(users.length).toBe(totalUserAmount)
+    const users: IKeyValue = transaction.getUsers();
+    expect(users.values.length).toBe(totalUserAmount)
   })
 })

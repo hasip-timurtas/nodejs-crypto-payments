@@ -1,9 +1,9 @@
 import userData from '../data/users.json';
 import transactionsData1 from '../data/transactions-1.json';
 import transactionsData2 from '../data/transactions-2.json';
-import { ITransaction } from './types';
+import { ITransaction, IKeyValue } from './types';
 const format = require('pg-format')
-import { Pool } from 'pg'
+import { Pool, QueryResult } from 'pg'
 
 export default class Transactions {
 
@@ -14,7 +14,7 @@ export default class Transactions {
    * 
    * @throws Error - Throws error if there is duplicated records in transactions
    */
-  async startPrintProcess() {
+  async startPrintProcess(): Promise<void> {
     await this.seedData();
     await this.printDepositInformation();
   }
@@ -23,7 +23,7 @@ export default class Transactions {
   * Imports the initial data to database
   * For users and transactions
   */
-  private async seedData() {
+  private async seedData(): Promise<void> {
     await this.pool.query('DROP TABLE IF EXISTS account');
     await this.pool.query(
       `CREATE TABLE account(
@@ -33,7 +33,8 @@ export default class Transactions {
           index integer)`
     );
 
-    await this.pool.query(format('INSERT INTO account(name, address, index) VALUES %L', this.getUsers()));
+    const users: IKeyValue = this.getUsers();
+    await this.pool.query(format(`INSERT INTO account(${users.keys}) VALUES %L`, users.values));
 
     await this.pool.query('DROP TABLE IF EXISTS transaction');
     await this.pool.query(
@@ -57,15 +58,15 @@ export default class Transactions {
             bip125replaceable varchar(255))`
     )
 
-    const { keys, values } = this.getTransactions();
-    await this.pool.query(format(`INSERT INTO transaction(${keys}) VALUES %L`, values))
+    const transactions: IKeyValue = this.getTransactions();
+    await this.pool.query(format(`INSERT INTO transaction(${transactions.keys}) VALUES %L`, transactions.values))
   }
 
   /**
    * Prints the deposit information
    */
-  async printDepositInformation() {
-    const data = await this.pool.query(
+  async printDepositInformation(): Promise<void> {
+    const data: QueryResult<any> = await this.pool.query(
       `SELECT acc.name, COUNT(ts.id), SUM(ts.amount)
         FROM transaction ts
         LEFT JOIN account as acc ON ts.address = acc.address
@@ -87,7 +88,7 @@ export default class Transactions {
         )
     })
 
-    const minMax = await this.pool.query(
+    const minMax: QueryResult<any> = await this.pool.query(
       `SELECT MIN(amount), MAX(amount)
         FROM transaction
         WHERE confirmations > 5
@@ -106,7 +107,7 @@ export default class Transactions {
    * 
    * @returns 
    */
-  getTransactions() {
+  getTransactions(): IKeyValue {
     const importedTransactions: Array<ITransaction> = [
       ...transactionsData1.transactions,
       ...transactionsData2.transactions,
@@ -156,8 +157,12 @@ export default class Transactions {
    * 
    * @returns {array} users
    */
-  getUsers(): (string | number)[][] {
-    return userData.map(user => Object.values(user));
+  getUsers(): IKeyValue {
+    const userKeys = ['name', 'address', 'index']
+    return {
+      keys: userKeys.join(', '),
+      values: userData.map(user => Object.values(user))
+    }
   }
 
 
